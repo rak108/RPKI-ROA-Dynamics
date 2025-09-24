@@ -1,13 +1,11 @@
 # This file parses from CSVs and stores them in a CSV/Parquet file.
 
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 import glob
 import os
 import argparse
-import sys
-
-#display full text
-pd.set_option('display.max_colwidth', None)
 
 considered_columns = {
     'URI': 'uri',
@@ -20,30 +18,32 @@ considered_columns = {
 
 def parse_csvs_and_save(csvs, output_dir, output_filename, output_type):
 
+    output_filename = output_filename + "." + output_type
     output_filepath = os.path.join(output_dir, output_filename)
 
-    all_data = []
-
+    final_data = 0
+    os.makedirs(output_dir, exist_ok=True)
+    writer = None
     for csv in csvs:
         data = pd.read_csv(csv)
         data = data[list(considered_columns.keys())].rename(columns=considered_columns)
         base_name = os.path.basename(csv)
         date_part = base_name.split('_')[0]
-        data['snapshot_date'] = pd.to_datetime(date_part, format='%Y%m%d')
-        all_data.append(data)
-        print(f"{csv}")
+        snapshot_date = pd.to_datetime(date_part, format='%Y%m%d')
+        for chunk in pd.read_csv(csv, usecols=considered_columns.keys(), chunksize=100000):
+            chunk = chunk.rename(columns=considered_columns)
+            chunk["snapshot_date"] = snapshot_date
+            table = pa.Table.from_pandas(chunk, preserve_index=False)
+            if writer is None:
+                writer = pq.ParquetWriter(output_filepath, table.schema)
+            writer.write_table(table)
+            final_data += len(chunk)
+        print(f" ** Processed {csv}")
 
-    final_data = pd.concat(all_data, ignore_index=True)
-    print(f"\nCompleted parsing and combined {len(final_data)} records.")
-    os.makedirs(output_dir, exist_ok=True)
-    if output_type == 'csv':
-        output_filepath = output_filepath + '.csv'
-        final_data.to_csv(output_filepath)
-    elif output_type == 'parquet':
-        output_filepath = output_filepath + '.parquet'
-        final_data.to_parquet(output_filepath)
-    
-    print(f"Saved the parsed data to {output_filepath}.\n")
+    if writer:
+        writer.close()
+
+    print(f"\nCompleted parsing and combined {final_data} records. Saved the parsed data to {output_filepath}.\n")
 
 
 def main(csv_directory, csv_name, output_dir, output_filename, output_type):

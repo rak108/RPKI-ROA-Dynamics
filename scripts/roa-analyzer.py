@@ -3,9 +3,10 @@
 import pandas as pd
 import sys
 
+#display full text
+pd.set_option('display.max_colwidth', None)
 
-input_file = '/Users/rakshita/Desktop/gatech/fall25/8903/code/scripts/output/all_roas_data_pd.parquet'
-
+input_file = '/Users/rakshita/Desktop/gatech/fall25/8903/code/output/roas_2309_pd.parquet'
 
 ipxo_uri = 'rsync://r.magellan.ipxo.com/repo/'
 
