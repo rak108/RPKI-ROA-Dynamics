@@ -32,7 +32,7 @@ def parse_csvs_and_save(zips, output_dir, output_filename, output_type, clean):
             base_name = os.path.basename(zip)
             date_part = base_name.split('_')[0]
             snapshot_date = pd.to_datetime(date_part, format='%Y%m%d')
-            # Open the compressed file in text-reading mode ('rt')
+            # Open the compressed file in text-reading mode
             with lzma.open(zip, 'rt') as csv:
                 for chunk in pd.read_csv(csv, usecols=considered_columns.keys(), chunksize=100000):
                     chunk = chunk.rename(columns=considered_columns)

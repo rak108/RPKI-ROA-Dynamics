@@ -1,4 +1,4 @@
-# Fetches all ROAs associated to prefixes once associated to ASN 834 or Magellan Repo.
+# Fetches all ROAs associated to prefixes once associated to ASN 834 or Magellan Repo (depends upon CSV you feed it).
 
 import argparse
 import pandas as pd
@@ -32,6 +32,7 @@ def main(prefix_details, fdata_file, output_file):
     history_df = df[df['prefix'].isin(churned_prefixes)].copy()
     print(f" * Found {len(history_df):,} total ROA records for all churned prefixes.")
     unique_cols = ['prefix', 'asn', 'max_len', 'not_before', 'not_after']
+    # unique_cols = ['prefix', 'asn', 'max_len']
     unique_history_df = history_df.drop_duplicates(subset=unique_cols)
     print(f" ** Found {len(unique_history_df):,} total unique ROA records for all churned prefixes.")
 
@@ -52,7 +53,7 @@ if __name__ == "__main__":
         '--prefix_details', 
         type=str, 
         required=True,
-        help="Path to the CSV (TBD) details file having churned prefix (output of roa-analyzer-*.py)."
+        help="Path to the CSV details file having churned prefix (event details output of roa-analyzer-*.py)."
     )
     
     parser.add_argument(

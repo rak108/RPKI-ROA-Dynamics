@@ -6,7 +6,6 @@ import os
 
 SUMMARY_CSV = '/Users/rakshita/Desktop/gatech/fall25/8903/code/output/final/ipxo_roa_event_summary_uri.csv'
 DETAIL_CSV = '/Users/rakshita/Desktop/gatech/fall25/8903/code/output/final/ipxo_roa_event_details_uri.csv'
-DETAIL_PARQUET = '/Users/rakshita/Desktop/gatech/fall25/8903/code/output/final/ipxo_roa_event_details_uri.parquet'
 
 IPXO_REPO_URI = 'rsync://r.magellan.ipxo.com'
 
@@ -134,9 +133,7 @@ def main(input_file):
     output_dir = os.path.dirname(DETAIL_CSV)
     os.makedirs(output_dir, exist_ok=True)
     details_df.to_csv(DETAIL_CSV, index=False)
-    output_dir = os.path.dirname(DETAIL_PARQUET)
-    os.makedirs(output_dir, exist_ok=True)
-    details_df.to_parquet(DETAIL_PARQUET, index=False)
+
 
     print(f"\nSaved summary (event count) to {SUMMARY_CSV}")
     print(f"Saved detailed events to {DETAIL_CSV}")
@@ -145,7 +142,7 @@ def main(input_file):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Analyzing RPKI ROA CSVs - IPXO Magellan Repo specific")
     
-
+    # Output of roa-csv-parser file
     parser.add_argument(
         '--file', 
         type=str, 

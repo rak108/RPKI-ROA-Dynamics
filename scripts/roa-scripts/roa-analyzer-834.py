@@ -4,20 +4,19 @@ import argparse
 import pandas as pd
 import os
 
-SUMMARY_CSV = '/Users/rakshita/Desktop/gatech/fall25/8903/code/output/final1/ipxo_roa_event_summary_834.csv'
-DETAIL_CSV = '/Users/rakshita/Desktop/gatech/fall25/8903/code/output/final1/ipxo_roa_event_details_834.csv'
-DETAIL_PARQUET = '/Users/rakshita/Desktop/gatech/fall25/8903/code/output/final1/ipxo_roa_event_details_834.parquet'
+# SUMMARY_CSV = '/Users/rakshita/Desktop/gatech/fall25/8903/code/output/final1/ipxo_roa_event_summary_834.csv'
+# DETAIL_CSV = '/Users/rakshita/Desktop/gatech/fall25/8903/code/output/final1/ipxo_roa_event_details_834.csv'
 
 IPXO_ASN = 'AS834'
 IPXO_REPO_URI = 'r.magellan.ipxo.com'
 
-def main(input_file):
+def main(input_file, summary_file, event_file):
     print("\n*************************************************************************************")
     print("\n-------------------------- RPKI ROA IPXO ANALYSIS - ASN 834 -------------------------")
     print("\n*************************************************************************************")
 
     try:
-        print("Fetching date range...")
+        print("Fetching date range.")
         all_dates = pd.read_parquet(input_file, columns=['snapshot_date'])['snapshot_date'].drop_duplicates()
         sorted_dates = sorted(pd.to_datetime(all_dates).dt.date)
         print(f" * Found {len(sorted_dates)} snapshot days to process.")
@@ -121,18 +120,15 @@ def main(input_file):
     summary_df = pd.DataFrame(daily_count)
     details_df = pd.DataFrame(detailed_log)
 
-    output_dir = os.path.dirname(SUMMARY_CSV)
+    output_dir = os.path.dirname(summary_file)
     os.makedirs(output_dir, exist_ok=True)
-    summary_df.to_csv(SUMMARY_CSV, index=False)
-    output_dir = os.path.dirname(DETAIL_CSV)
+    summary_df.to_csv(summary_file, index=False)
+    output_dir = os.path.dirname(event_file)
     os.makedirs(output_dir, exist_ok=True)
-    details_df.to_csv(DETAIL_CSV, index=False)
-    output_dir = os.path.dirname(DETAIL_PARQUET)
-    os.makedirs(output_dir, exist_ok=True)
-    details_df.to_parquet(DETAIL_PARQUET, index=False)
+    details_df.to_csv(event_file, index=False)
 
-    print(f"\nSaved summary (event count) to {SUMMARY_CSV}")
-    print(f"Saved detailed events to {DETAIL_CSV}")
+    print(f"\nSaved summary (event count) to {summary_file}")
+    print(f"Saved detailed events to {event_file}")
 
     print("\nFinding 'permanent' prefixes (associated with AS834 but never churned)")
     churned_prefixes = set(details_df['prefix'])
@@ -141,15 +137,11 @@ def main(input_file):
     permanent_prefixes = all_ipxo_prefixes - churned_prefixes
     print(f" * Found {len(permanent_prefixes)} permanent (non-churning) prefixes.")
 
-    perm_file = '/Users/rakshita/Desktop/gatech/fall25/8903/code/output/ipxo_permanent_prefixes_834.csv'
-    pd.DataFrame(list(permanent_prefixes), columns=['prefix']).to_csv(perm_file, index=False)
-    print(f"\nSaved permanent prefix list to {perm_file}")
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Analyzing RPKI ROA CSVs - ASN 834 specific")
     
-
+    # Output of roa-csv-parser file
     parser.add_argument(
         '--file', 
         type=str, 
@@ -157,6 +149,20 @@ if __name__ == "__main__":
         help="The file path of the Parquet file which is to be analyzer."
     )
 
+    parser.add_argument(
+        '--summary_output_file_path', 
+        type=str, 
+        default=None,
+        help="The file path of the summary file to be saved."
+    )
+
+    parser.add_argument(
+        '--detail_output_file_path', 
+        type=str, 
+        default=None,
+        help="The file path of the detailed file to be saved."
+    )
+
     args = parser.parse_args()
-    main(args.file)
+    main(args.file, args.summary_output_file_path, args.detail_output_file_path)
 
